@@ -1,1 +1,79 @@
 Put any projects in here and code for assingments
+
+
+'''
+list is a data type that stores elements in a list (array)
+ex_list = [1, 2, 3, 4, 5]
+this list has a length of 5 elements  (integer elements)
+indexes range from 0-4
+can access elemenets of a list
+ ex_list[0]
+ will access the 0 index of the list
+ 
+ Looping through lists
+ for loops are strong tools to iterate through elements of a list
+ 
+ ex:
+ for element in ex_list:
+    print(element)
+
+this will output 
+1
+2
+3
+4
+5
+
+can also iterate through a list using its indexes
+
+for i in range(len(ex_list)):
+    print(ex_list[i])
+
+will output the same as above
+
+Properties of a list:
+once a list has been created
+it can be modified in multiple ways
+- elements can be changed
+ex:
+ex_list[0] = 0
+will change element with index 0 to the value of 0
+
+- elements can be added or deleted
+exs:
+ex_list.append(6)
+will add the element 6 to the list in the max index position plus 1
+
+del ex_list[index]
+will delete element with the specified index
+
+ex_list.replace(new, old):
+will replace new element in old index position
+
+There are a ton of methods that can be done on lists!
+Here is a link
+https://www.programiz.com/python-programming/methods/list
+
+
+List challenge problems:
+
+1. Write a function to alter a list by changing elements of position i to i+1
+ex:
+[1, 2, 3, 4] -> [4, 1, 2, 3]
+
+ '''
+
+'''
+2. Write a boolean function that takes two inputs, a list of integers and an integer
+it will return true if the input integer is a element within the list
+ex:
+([1, 2, 3, 4], 2) -> True
+([1, 2, 3, 4], 5) -> False
+'''
+
+'''
+3. Write a void function that takes an input of list of integers and alters each element within the list
+by cubing each element
+ex:
+[1, 2, 3, 4, 5] -> [1, 8, 27, 64, 125]
+'''
