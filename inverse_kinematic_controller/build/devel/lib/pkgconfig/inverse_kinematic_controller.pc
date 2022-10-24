@@ -1,0 +1,8 @@
+prefix=/home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build/devel
+
+Name: inverse_kinematic_controller
+Description: Description of inverse_kinematic_controller
+Version: 0.0.0
+Cflags: -I/home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/include -I/usr/include/eigen3 -I/opt/ros/noetic/include
+Libs: -L${prefix}/lib -lcubic_polynomial_planner -lpinocchio -lEigen3
+Requires: cubic_polynomial_planner roscpp
