@@ -1,0 +1,16 @@
+# topics to read
+
+
+# urdf file
+urdf_file_name: /home/julienh/catkin_ws/src/ros_kortex/kortex_description/urdf
+
+# parameters
+dt: .002
+
+d: [0,0,0,
+    0,0,0,
+    0,0,0]
+
+k: [0,0,0,
+    0,0,0,
+    0,0,0]
