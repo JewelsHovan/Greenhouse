@@ -5,12 +5,12 @@
 #include <pinocchio/algorithm/joint-configuration.hpp>
 #include <pinocchio/algorithm/compute-all-terms.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
+#include <ros/ros.h>
 #include <cubic_polynomial_planner/MoveRobot.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <Eigen/Dense>
 #include "cubic_polynomial.h"
-#include <ros/ros.h>
 
 
 // read the joint feedback by subscribing to the topic /gen3/joint_states 
@@ -30,7 +30,7 @@
 class InverseController{
 
     private:
-    // fields
+    // ros fields
     ros::Subscriber joint_sub;
     ros::Publisher joint_pub;
     ros::ServiceServer move_robot_srv;
@@ -38,12 +38,16 @@ class InverseController{
     Eigen::VectorXd start_pos;
     // target position and time
     Eigen::VectorXd target_position;
+    Eigen::VectorXd end_effector_pos;
     double target_t;
+
     // callback from subscriber
     Eigen::VectorXd joint_pos;
     Eigen::VectorXd joint_vel;
 
     double start_time;
+    double target_time;
+    ros::Duration duration;
     
     // pinocchio setup
     double dt = .0002;
@@ -52,7 +56,10 @@ class InverseController{
     int JOINT_ID = 7;
     int dim_joints;
 
-
+    Eigen::VectorXd joint_pos = Eigen::VectorXd(7);
+    Eigen::VectorXd joint_vel = Eigen::VectorXd(7);
+    Eigen::VectorXd start_pos = Eigen::VectorXd(7);
+    Eigen::VectorXd final_pos = Eigen::VectorXd(7);
 
 
     public:
@@ -60,8 +67,8 @@ class InverseController{
     InverseController(ros::NodeHandle *nh){
         // initialization
 
-        joint_sub = nh->subscribe<sensor_msgs::JointState>("/gen3/joint_states", 10, &InverseController::callback_joint);
-        joint_pub = nh->advertise<std_msgs::Float64MultiArray>("/gen3/joint_group_position_controller/command", 10, this);
+        joint_sub = nh->subscribe<sensor_msgs::JointState>("/gen3/joint_states", 10, &InverseController::callback_joint, this);
+        joint_pub = nh->advertise<std_msgs::Float64MultiArray>("/gen3/joint_group_position_controller/command", 10);
         move_robot_srv = nh->advertiseService("move_robot", &InverseController::callback_service, this);
 
     }
@@ -82,40 +89,28 @@ class InverseController{
         target_position(0) = req.x;
         target_position(1) = req.y;
         target_position(2) = req.z;
+        end_effector_pos = Eigen::VectorXd::Zero(6);
+        for(int i=0; i<3; i++){
+            end_effector_pos(i) = target_position(i);
+        }
+
         target_t = (double) req.t;
 
 
-        // using pinocchio to build model 
-        pinocchio::urdf::buildModel(urdf_file_name, model, false);
-        pinocchio::Data data(model);
-        dim_joints = model.nq;
+        // setup
 
-        // current time
+        // ros start time
         ros::Time ros_start_time = ros::Time::now();
-        start_time = ros::Time::now().toSec();
+        start_time = ros_start_time.toSec();
 
-        // calculate forward kinematics to get the start end_effector_pos
-        pinocchio::forwardKinematics(model, data, joint_pos, joint_vel);
-        pinocchio::SE3 pose_now = data.oMi[JOINT_ID];        
-        
-        // jacobian 
-        Eigen::MatrixXd jacobian_local_world = Eigen::MatrixXd::Zero(3, dim_joints);
-        pinocchio::computeAllTerms(model, data, joint_pos, joint_vel);
-        pinocchio::getJointJacobian(model, data, JOINT_ID, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, jacobian_local_world);
-
-        Eigen::MatrixXd jacobian_dot = Eigen::MatrixXd::Zero(3, dim_joints); 
-        pinocchio::computeJointJacobiansTimeVariation(model, data, joint_pos, joint_vel);
-        pinocchio::getJointJacobianTimeVariation(model, data, JOINT_ID, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, jacobian_dot);
-
+        for(int i = 0; i < joint_pos.size(); i++){
+            start_pos[i] = joint_pos[i];
+        }
         // update position
         this->update_position();
 
-        // integrate joint_vel to compute next positions
-        Eigen::VectorXd joint_pos_next = joint_pos + joint_vel * dt;
-        pinocchio::forwardKinematics(model, data, joint_pos_next, joint_vel);
-        pinocchio::SE3 pose_next = data.oMi[JOINT_ID];
-
         res.return_msg = "Finished Task";
+        duration = ros::Time::now() - ros_start_time;
         return true;
 
 
@@ -123,26 +118,62 @@ class InverseController{
 
 
     void update_position(){
-        // calculate x_dot_ref using cubic_polynomial planner 
-        cubic_polynomial planner = cubic_polynomial(start_pos, target_position, target_t);
-        planner.computeVelReference(ros::Time::now().toSec() - start_time);
 
-        // inverse kinematics = q_dot_ref = J_psuedo_inverse * x_dot_ref
+        // using pinocchio to build model 
+        pinocchio::urdf::buildModel(urdf_file_name, model, false);
+        pinocchio::Data data(model);
+        dim_joints = model.nq; // joint configuration vector
 
-
-
+        double t = ros::Time::now().toSec() - start_time;
+        double T = target_t + ros::Time::now().toSec();
         
+        while(t <= T){
+            // calculate x_dot_ref using cubic_polynomial planner 
+            cubic_polynomial planner = cubic_polynomial(start_pos, target_position, target_t);
+            Eigen::VectorXd x_dot_ref = planner.computeVelReference(ros::Time::now().toSec() - start_time);
+            Eigen::VectorXd x_ref = planner.computePosReference(ros::Time::now().toSec() - start_time);
+
+            // forward kinematics -> current end-effector pose
+            pinocchio::forwardKinematics(model, data, joint_pos, joint_vel);
+            pinocchio::SE3 pose_now = data.oMi[JOINT_ID];
+
+            // translate into a vector
+            Eigen::VectorXd cur_pose = Eigen::VectorXd(6); // 6d for position and orientation
+            for(int i = 0; i < 3; i++){
+                cur_pose(i) = (pose_now.translation())(i);
+            }
+
+            // Jacobian in local frame 
+            Eigen::MatrixXd jacobian_local = Eigen::MatrixXd::Zero(6,dim_joints) ;
+	        pinocchio::computeJointJacobian(model, data, joint_pos, JOINT_ID, jacobian_local);
+
+	        // *************** Jacobian in the world frame *******************************************
+	        Eigen::MatrixXd jacobian_local_world = Eigen::MatrixXd::Zero(6,dim_joints) ;
+	        pinocchio::computeAllTerms(model, data, joint_pos, joint_vel) ;
+	        pinocchio::getJointJacobian(model, data, JOINT_ID, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, jacobian_local_world) ;
+
+            // Pseudo-inverse of Jacobian
+    	    Eigen::MatrixXd jacobian_dot = Eigen::MatrixXd::Zero(6,dim_joints) ;
+	        pinocchio::computeJointJacobiansTimeVariation(model, data, joint_pos, joint_vel );
+	        pinocchio::getJointJacobianTimeVariation(model, data, JOINT_ID, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, jacobian_dot) ;
+
+            // redundancy resolution
+            Eigen::MatrixXd Nq = (Eigen::MatrixXd::Identity(7,7) - jacobian_dot * jacobian_local) * joint_vel;
+
+            // Make float array to publish
+            std_msgs::Float64MultiArray ref_joint_vel_float;
+            ref_joint_vel_float.data.resize(7);		
+            for (int i=0; i<7; i++) {
+                ref_joint_vel_float.data[i] = joint_vel(i);
+            }
+            
+            // Publish reference joint velocity
+            joint_pub.publish(ref_joint_vel_float);
+            double t = ros::Time::now().toSec() - start_time;
+
+            // update joint velocities
+            joint_vel = ref_joint_vel;
     }
+}
 };
 
-
-
-
-
-int main(int argc, char** argv){
-    ros::init(argc, argv, "inverse_controller");
-    // handle
-    ros::NodeHandle nh;
-    InverseController IC = InverseController(&nh);
-    return 0;
-}

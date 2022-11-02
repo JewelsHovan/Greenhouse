@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
 #find_package(cubic_polynomial_planner)
-add_definitions("-BOOST_MPL_LIMIT_LIST_SIZE=30")
+add_definitions("-DBOOST_MPL_LIMIT_LIST_SIZE=30")
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -147,11 +147,11 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-#add_executable(${PROJECT_NAME}_node src/inverse_joint_publisher.cpp)
-#target_link_libraries(inverse_kinematic_controller_node
-#    ${catkin_LIBRARIES}
-#    ${PINOCCHIO_LIBRARIES}
-#)
+add_executable(${PROJECT_NAME}_node src/inverse_joint_publisher.cpp)
+target_link_libraries(inverse_kinematic_controller_node
+    ${catkin_LIBRARIES}
+    ${PINOCCHIO_LIBRARIES}
+)
 #add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

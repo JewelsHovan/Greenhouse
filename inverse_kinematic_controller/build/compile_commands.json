@@ -1,6 +1,12 @@
 [
 {
   "directory": "/home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build",
+  "command": "/usr/bin/c++  -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"inverse_kinematic_controller\\\" -I/home/julienh/catkin_ws/devel/.private/cubic_polynomial_planner/include -I/home/julienh/catkin_ws/src/robotic-coursework-f2022/cubic_polynomial_planner/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3  -g   -o CMakeFiles/inverse_kinematic_controller_node.dir/src/inverse_joint_publisher.cpp.o -c /home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/src/inverse_joint_publisher.cpp",
+  "file": "/home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/src/inverse_joint_publisher.cpp"
+},
+
+{
+  "directory": "/home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build",
   "command": "/usr/bin/c++  -DGTEST_CREATE_SHARED_LIBRARY=1 -Dgmock_main_EXPORTS -isystem /usr/src/googletest/googlemock/include -isystem /usr/src/googletest/googlemock -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest  -g -fPIC   -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DGTEST_HAS_PTHREAD=1 -std=c++11 -o gtest/googlemock/CMakeFiles/gmock_main.dir/src/gmock_main.cc.o -c /usr/src/googletest/googlemock/src/gmock_main.cc",
   "file": "/usr/src/googletest/googlemock/src/gmock_main.cc"
 },

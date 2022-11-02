@@ -1,6 +1,7 @@
 /home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build/CMakeFiles/install/strip.dir
 /home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build/CMakeFiles/install.dir
 /home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build/CMakeFiles/list_install_components.dir
+/home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build/CMakeFiles/inverse_kinematic_controller_node.dir
 /home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir
 /home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build/CMakeFiles/sensor_msgs_generate_messages_lisp.dir
 /home/julienh/Desktop/Comp514/robotic-coursework-f2022/inverse_kinematic_controller/build/CMakeFiles/sensor_msgs_generate_messages_cpp.dir
