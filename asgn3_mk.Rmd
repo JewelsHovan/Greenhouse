@@ -1,0 +1,207 @@
+---
+title: "a3_markdown"
+author: "Julien Hovan"
+date: "2022-11-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+SETUP:
+```{r}
+library(readxl)
+salary <- read_excel("/home/julienh/Downloads/salary2.xlsx")
+x1 <- salary$SPENDING/1000
+y <- salary$SALARY
+fit.salary <- lm(y~x1)
+summary(fit.salary)
+
+```
+
+Q1:
+A)
+```{r}
+### A) Write R code to verify the calculation of the entries in the estimate column
+n <- length(x1)
+k <- 1
+
+#transform x1 into a matrix with a column of ones (constant)
+X <- matrix(x1)
+X <- cbind(1, X)
+
+# Estimates of Intercept (Beta_0) and x1 (Beta_1)
+# Solving using OLS matrix algebra
+# beta.hat = (X'X)^-1 X'y -> use solve() to get inverse and t() to transpose
+beta.hat <- solve(t(X)%*%X) %*% t(X)%*%y
+print("Beta hat values:")
+print(beta.hat)
+## -> values match the summary lm model
+
+```
+Answer: We can see that the values estimated using OLS matrix algebra match the beta estimates from the summary(lm) model
+
+
+
+Q1B)
+```{r}
+### B) Verify numerically the orthogonality results concerning the residuals
+# Compute the fit y_hat = X * B_hat
+y.hat <- X %*% beta.hat
+# Compute the residuals 
+e.hat <- y - y.hat
+
+# sum of residuals 
+sum(e.hat)
+
+# sum of (e.hat(xi - x_bar)) 
+x_bar <- mean(x1)
+sum(e.hat * (x1 - x_bar))
+
+# sum of (e.hat * y.hat)
+sum(e.hat * y.hat)
+
+```
+We can verify the results concerining the residuals, the justification for not being exactly 0 is the sample size of the data point is too small. As shown in class as n -> inf, both the residuals will go to 0 (ie. it is asympotomatically unbiased and goes to 0)
+
+Q1C)
+```{r}
+### C) Compute the value of the entry in the Std. Error using entires given in the table then using the data directly
+sig2 <- (t(e.hat)%*%e.hat) / (n-(k+1))
+
+# Estimate of V[hat{beta}]
+vcov_beta_hat <- c(sig2) * solve(t(X) %*% X)
+
+# Estimate of standard errors
+sqrt(diag(vcov_beta_hat))
+cbind(beta.hat, sqrt(diag(vcov_beta_hat)))
+```
+We see that using the data directly, the value of the standard error for beta 0 and beta 1 hat.
+
+Q1D)
+```{r}
+
+#### D) Write R code to compute the value of the ommitted entry for the residual standard erorr on line 15
+
+# calculate sum of squared residuals
+SSE <- sum(e.hat**2)
+RSE <- sqrt(SSE/ n - (1+k))
+RSE
+
+```
+Using the formula Residual_Standard_Error = SSE / n - (1+k)
+RSE = 2278.739
+
+Q1E)
+The null hypothesis:
+H0: B1 = 0
+Alternate hypothesis:
+H1: B1 != 0
+Failing to reject the null implies that there is no linear relationship between X1 and Y since
+Y = 0 * X1 + B0 + e = B0 + e
+
+Decision Rule:
+We reject H0 if the 100(1-alpha) percent confidence interval CI(B1) does not cover 0. The corresponding test statistic is 
+T1 = beta1.hat - 0 / ese(beta1.hat)
+```{r}
+#### e) Test whether there is a linear association between SALARY and SPENDING using alpha = .05 -> state alternative hypothesis, decision rule, and conclsuion, what is the p-value of the test?
+alpha = .005
+
+ese.beta <- sqrt(diag(vcov_beta_hat))
+
+test_statistic <- beta.hat / ese.beta
+print("The t-statistic for beta1.hat is:")
+test_statistic[2]
+
+p.value <- 2*pt(-abs(test_statistic[2]), df= n -1)
+print("The p value is: ")
+p.value
+
+```
+Conclusion:
+p-value < alpha = .005 to a significant degree,
+-> There is sufficient evidence to conlucde that there is a significant linear relationship between x (SALARY) and y (SPENDING) because the correlation coefficient is significantly different from zero
+
+
+Q2:
+```{r}
+
+```
+
+
+Q3:
+A) Fit simple linear regression model with g1 as the predictor -> second column of genetic data
+```{r}
+genetic_data <- read_excel("/home/julienh/Downloads/genetic_data2.xlsx")
+
+genetic.lm.gene1 <- lm(genetic_data$y ~ genetic_data$X14046)
+
+# Use t-test to compute the p-vlaue p1 for hypothesis test
+# Ho: B1 = 0 versus H1: B1 != 0
+t.test(genetic_data$y,genetic_data$X14046)
+```
+p-value = 2.2e-16
+
+Using alpha = .05, we reject the null hypothesis and can conclude that gene1 is statistically significant.
+
+Q3 B) Repeat using genes 2-10 as the predictor
+```{r}
+
+genetic.lm.genes <- lm(y~X15850+X23006+X22110+X29566+X21092+X30116+X22029+X15224+X25141, data=genetic_data)
+
+summary(genetic.lm.genes)
+coefficients(summary(genetic.lm.genes))
+
+```
+The lower the p-value -> the greater the statistical significance of the observed difference
+
+=> Gene6 (X21092) has the most significant association with the syndrome
+
+
+Q4: A) Plot the data using the pairs(stackloss) function
+```{r}
+data(stackloss)
+names(stackloss)
+
+# plot data 
+pairs(stackloss)
+```
+
+B) Fit a multiple regression model 
+```{r}
+model <- lm(stack.loss ~ Air.Flow + Water.Temp + Acid.Conc., data=stackloss)
+summary(model)
+
+```
+
+Q4 C): Construct 90% confidence intervals for the coefficients
+```{r}
+confint(model, level=.90)
+```
+The 90% confidence intervals for each coefficient
+
+Q4 D) Construct a 99% percent prediction interval for a new observation when Airflow = 58, Water.temp = 20, ACid = 86
+```{r}
+newdata = data.frame(Air.Flow=58, Water.Temp=20, Acid.Conc.=86)
+## predict with new frame
+predict(model, newdata, interval="predict", level=.99)
+```
+
+The 99% prediction interval of stackloss when Air Flow=58, Water Temperature = 20, and Acid Concentration=86 is between 4.759959 and 24.06133
+
+Q4 E) Test Null hypothesis Ho: B3 = 0, What is the p-value. What is the conclusion at alpha = .10
+
+Alternate hypothesis: H1: B3 != 0
+
+
+```{r}
+coefficients(summary(model))
+
+```
+
+
+The p-value is .3440461, using an alpha = .10, we can conclude that the null hypothesis is true. There is no statistical significance between stackloss and acid concentration.
+
+
+
