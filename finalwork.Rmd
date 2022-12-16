@@ -1,0 +1,212 @@
+---
+title: "Final"
+author: "Julien Hovan"
+date: "2022-12-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+\newcommand{\ci}{\perp\!\!\!\perp}
+
+```{r}
+library(readxl)
+
+
+```
+Q1)
+```{r}
+```
+
+Q2)
+```{r}
+# setup
+X <- c(1, 0, 2, 0, 3, 1, 0, 1, 2, 0)
+Y <- c(16, 9, 17, 12, 22, 13, 8, 15, 19, 11)
+plot(X, Y)
+airfreight.fit <- lm(Y~X)
+abline(airfreight.fit)
+anova(airfreight.fit)
+
+Sxy = sum((X - mean(X))*(Y - mean(Y)))
+Sxx = sum((X - mean(X))^2)
+b1.hat <- Sxy / Sxx
+b0.hat <- mean(Y) - (b1.hat * mean(X))
+
+# SS computations
+y.hat <- b0.hat +(b1.hat*X)
+SS.R = sum((y.hat - mean(Y))^2) 
+SS.Res = sum((Y - y.hat)^2)
+SS.T = SS.R + SS.Res
+sigma.sqr = SS.Res / 8
+
+E.SSR <- sigma.sqr + b1.hat^2*Sxx
+
+ese.b1 = sqrt(sigma.sqr / Sxx)
+t.stat = b1.hat / ese.b1
+t.stat^2
+
+R.sqr <- SS.R / SS.T
+sqrt(R.sqr)
+
+```
+
+Q3) Muscle Mass
+
+
+A)
+Pearson Correlation Formula: 
+$$\begin{equation}
+r = \frac{{}\sum_{i=1}^{n} (x_i - \overline{x})(y_i - \overline{y})}
+{\sqrt{\sum_{i=1}^{n} (x_i - \overline{x})^2(y_i - \overline{y})^2}}
+\end{equation}$$
+
+Correlation Test:
+H0: There is no correlation between the two variables: ρ = 0
+H1: There is a nonzero correlation between the two variables: ρ ≠ 0
+Risk/alpha = .05
+
+Decision Rule: 
+- If p-value < alpha: Reject null hypothesis, correlation between X and Y is significant
+- If p - value >= alpha: Not enough evidence to reject null hypothesis, the correlation between X and Y is 0
+```{r}
+mass.data <- read_excel("Muscle_mass.xlsx")
+#a) Using Pearson Correlation to test for linear association
+mass.lm <- lm(Y ~ X, data=mass.data)
+mass.n <- length(mass.data$X)
+# test for negative linear association 
+Y_bar = mean(mass.data$Y)
+X_bar = mean(mass.data$X)
+var_x = mass.data$X - X_bar
+var_y = mass.data$Y - Y_bar
+sigma_x = (mass.data$X - X_bar)^2
+sigma_y = (mass.data$Y - Y_bar)^2
+# correlation coefficient
+r <- sum(var_x * var_y) / sqrt(sum(sigma_x) * sum(sigma_y))
+cat("Pearson Correlation r = ", r, "\n")
+# compute t value 
+t.value <- (r / sqrt(1- r^2)) * sqrt(mass.n - 2)
+p.value <- 2* pt(-abs(t.value), df= (mass.n - 2))
+if (p.value < .05){
+  cat("The p-value: ", p.value, " is less than significnance level .05")
+}
+
+```
+Conclusion:
+The p-value is computed from the t-value as 4.1239e-19
+As the p-value is less than significance level (alpha), reject null hypothesis as there is a statistical signficance of correlation between X and Y. 
+As the pearson correlation coefficient r = -0.866064 => There is a negative linear association between X (age) and Y (muscle mass) in woman.
+
+B) 95 confint in Expected muscle mass for whose age differ by one year
+```{r}
+#b) Confidence interval in Expected muscle mass / one year 
+beta.1 <- mass.fit$coefficients[2]
+confint(mass.fit, beta.1, level=.95)
+```
+The expected difference in muscle mass over a age difference of a year => Slope => beta.1 in the SLR model
+Computing a 95% confidence interval for Beta.1 = [-1.370545, -1.009446], we have 95% confidence that the expected change in muscle mass over a year in woman is between -1.37045 and -1.009446 
+It is not necessary to know specific ages to make this estimate as we have underlying knowledge that the rate of change for muscle mass is not consistent throughout all ages, however we know that the rate of change is a function of age. Our estimatate interval explains the average amount of change for all age groups and this is a better value to estimate as it speaks to the entire space of X (age) rather than a specific set of age groups.
+
+C) 95% confidence interval for muslce mass of woman whose age is 60 (X =60)
+```{r}
+#c) 
+newdata = data.frame(X=60)
+predict(mass.lm, newdata, interval="confidence")
+```
+The confidence interval expresses uncertainty about the expected value of y-values at a given x. In this case x = 60. That means based on the data, the expected muscle mass at a 95% confidence interval is the range [82.83471, 87.05895]. We are 95% confident that the expected muscle mass based on the data will be in this interval for X=60.
+
+D) 95% prediction interval for muscle mass of a woman whose age is 60 (X=60)
+```{r}
+predict(mass.lm, newdata, interval="predict")
+```
+A prediction interval expresses uncertainty surrounding the predicted y-value of a single sampled point with that value of x. Compared to the confidence interval, this is the computed interval [68.45067, 101.443] where we predict the y-value of a single point (X=60). We can observe that the prediction interval is larger than the confidence interval and we can say that the prediction interval is not relatively precise w.r.t the data and previously computed confidence interval. We predict a value between ~68 to ~101 when based on our data, we are relatively confident that expected muscle mass for a woman whose age is 60 is between ~83 and ~87. Therefore we can say that the prediction interval is not precise.
+
+E) Anova table + F test
+F-TEST:
+Alpha = 0.05
+H0 : B1 = 0
+H1: B1 != 0
+
+Decision Rule: 
+- If p value is less than alpha, reject null hypothesis 
+- If p value greater than alpha, retain null hypothesis
+```{r}
+mass.anova <- anova(mass.lm)
+# setup f-test
+f.value = mass.anova$`F value`[1]
+p.value = pf(f.value, 1, 58, lower.tail=FALSE)
+alpha = 0.05
+if(p.value < alpha){
+  cat("P value of F-test: ", p.value, " is less than significance level (alpha")
+  cat("\n Reject null hypothesis")
+}
+```
+Conclusion: As the P value (4.123e-19) is less than significance level alpha (0.05), we reject the null hypothesis in favor of the alternate H1. We can say that there is a statistical significance between the response Y and the predictor X variables and that we are confident that B1 (the slope of the SLR model) is non zero.
+
+Q4) Grocery Retailer
+Setup)
+```{r}
+retail.data <- read_excel("Grocery_Retailer.xlsx")
+retail.Y <- retail.data$Y
+retail.X1 <- retail.data$X1
+retail.X2 <- retail.data$X2
+retail.X3 <- retail.data$X3
+fit.retail <- lm(Y ~ X1 + X2 + X3, data=retail.data)
+summary(fit.retail)
+```
+A) 
+Scatter Plot matrix
+```{r}
+pairs(retail.data)
+```
+Correlation matrix)
+```{r}
+cor(retail.data)
+```
+B)
+Plot the residuals against fitted values X1, X2, and X3 on separate graphs -> interperet plots and summarize findings
+```{r}
+# X1
+plot(retail.X1, residuals(fit.retail), pch = 19, ylab = "Residuals")
+abline(h = 0, lty = 2)
+title("Residuals vs X1")
+# X2
+plot(retail.X2, residuals(fit.retail), pch=19, ylab = "Residuals")
+abline(h = 0, lty = 2)
+title("Residuals vs X2")
+# X3
+plot(retail.X3, residuals(fit.retail), pch=19, ylab = "Residuals")
+abline(h = 0, lty = 2)
+title("Residuals vs X3")
+```
+C) Global F-test
+Significance level = 0.05
+H0 : B1 = B2 = B3 = 0
+H1: At least one Bj j=[1,2,3] is nonzero
+
+Decision Rule:
+- If p.value of F-statistic is < alpha, reject null hypothesis in favor of alternate
+- If p.value of F-statistic is >= alpha, retain null hypothesis
+```{r}
+fit.retail.sum <- summary(fit.retail)
+f.statistic <- fit.retail.sum$fstatistic[1]
+df_num = 3 
+df_denom = 48
+alpha = .05
+
+# p value of f statistic
+p.value = pf(f.statistic, df_num, df_denom, lower.tail=FALSE)
+if (p.value < alpha) {
+  cat("The p value of the F-statistic: ", p.value, " is less than the significance level" , alpha)
+}
+
+```
+Conclusion:
+As the p value of the F-test is 3.315708e-12 and is less than the significance level 0.05, we reject the null hypothesis in favor of the alternate
+
+
+
+
+
+
