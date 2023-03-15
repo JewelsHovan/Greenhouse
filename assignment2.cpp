@@ -1,7 +1,5 @@
 #include <iostream>
 #include <string.h>
-#include <cstring>
-#include <cstdio>
 #include <fstream>
 #include <sstream>
 
@@ -81,8 +79,9 @@ public:
         Node *currentNode = head;
         Node *previousNode = nullptr;
 
-        while(currentNode != nullptr) {
-            if(currentNode->version_id == version_id) {
+        while(currentNode != nullptr) { // traverse linked list
+            if(currentNode->version_id == version_id) { // compare by version_id
+                // maintain LL properties
                 if(currentNode == head) {
                     head = currentNode->next;
                 } else {
@@ -112,6 +111,19 @@ public:
         }
         return nullptr;
     }
+
+    /**
+     * Iterates through the linked list and deletes each Node object from memory
+    */
+   void freeUp(){
+        Node* currentNode = head;
+        Node* temp = nullptr;
+        while(currentNode != nullptr){
+            temp = currentNode;
+            currentNode = currentNode->next;
+            delete(temp);
+        }
+   }
 
     /**
      * Returns the number of Node objects currently stored in linked list
@@ -199,6 +211,7 @@ private:
         string search_keyword;
         string version_to_delete;
 
+        // loop that handles user input and leaves behavior implementation in add/remove/load/compare/search methods
         while(!will_exit){
             std::cin >> key_pressed;
             switch(key_pressed){
@@ -208,7 +221,6 @@ private:
                     content = readFile(file_ptr);
                     add(content);
                     file_ptr.close(); // close file
-                    std::cout << "Your content has been added successfully!" << std::endl;
                     break;
                 case 'r': // Remove case
                     std::cout << "Enter the number of the version that you want to delete:" << std::endl;
@@ -239,6 +251,7 @@ private:
                 case 'e': // Exit case
                     std::cout << "Exiting program..." << std::endl;
                     will_exit = true;
+                    ll->freeUp(); // delete each Node object
                     delete ll;
                     break;
             }
@@ -263,6 +276,7 @@ private:
         int hash_value = hash_it(content);
         Node* newNode = new Node(version_id, hash_value, content);
         ll->insert(newNode);
+        std::cout << "Your content has been added successfully!" << std::endl;
     }
     /**
      * Prints out all the versions saved in the linked list
@@ -359,7 +373,7 @@ private:
         return buffer.str();
     }
 
-    void overwriteFile(const std::string& filename, const std::string& content) {
+    void overwriteFile(const string& filename, const string& content) {
         /*
         Given the filename and content as strings, overwrites the file matching with the filename with the content
         */
@@ -368,17 +382,20 @@ private:
         ofs.close();
     }
 
-    void compareStrings(const std::string& str1, const std::string& str2) {
+    void compareStrings(const string& str1, const string& str2) {
         /*
         Given two string objects, compares the two strings line by line
         */
+        // convert into stream objects, to iterate through lines
         std::stringstream ss1(str1);
         std::stringstream ss2(str2);
 
         std::string line1, line2;
+        // Line count and identical variables
         int lineNum = 1;
-        bool identical = true;
+        bool identical = true; // if strings are identical 
 
+        // for lines matching between str1 and str2
         while (std::getline(ss1, line1) && std::getline(ss2, line2)) {
             if (line1 == line2) {
                 std::cout << "Line " << lineNum << ": <Identical>" << std::endl;
@@ -389,36 +406,37 @@ private:
             lineNum++;
         }
 
-        // handle any remaining lines in the longer string
+        // handle any remaining lines in the remaining longer string
+        // if longer is str1
         while (std::getline(ss1, line1)) {
             identical = false;
             std::cout << "Line " << lineNum << ": " << line1 << " <<>> <Empty line>" << std::endl;
             lineNum++;
         }
 
+        // if longer is str2
         while (std::getline(ss2, line2)) {
             identical = false;
             std::cout << "Line " << lineNum << ": <Empty line> <<>> " << line2 << std::endl;
             lineNum++;
         }
-
     }
 
     /**
-     * Given a eyword as a string, searches for all Node objects of Linked list with the keyword in the content field
+     * Given a keyword as a string, searches for all Node objects of Linked list with the keyword in the content field
      * @param keyword - string value representing the user entered keyword to search for
      * @param content - string content of a Node object 
      * @returns a boolean, true if keyword is found in content, false otherwise
     */
     bool isKeywordInContent(std::string keyword, std::string content) {
-        return (content.find(keyword) != std::string::npos);
+        return (content.find(keyword) != std::string::npos); // npos is returned if find() does not return an index integer
     }
 
     std::size_t hash_it (std::string someString){
         /*
         Return the hash value of a string 
         */
-        std::size_t hash_value = std::hash<std::string>{}(someString);
+        std::size_t hash_value = hash<string>{}(someString);
         return hash_value;
     }
 };
