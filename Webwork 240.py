@@ -43,9 +43,8 @@ for combo in combinations_2D:
 #
 #
 #
-run_it = False
 # web work bot entering combinations A3
-if run_it:
+if run_it := False:
     web_work_bot = WebWorkBot()
     web_work_bot.login(a3_url, j_user, j_pass)
 
@@ -58,9 +57,8 @@ if run_it:
         web_work_bot.submit_answers()
 
 # run bot
-run_it_A4 = True
 # web work bot entering combinations A4
-if run_it_A4:
+if run_it_A4 := True:
     sleep_time = .2
     web_work_bot = WebWorkBot()
     web_work_bot.login(a4_url, j_user, j_pass)
