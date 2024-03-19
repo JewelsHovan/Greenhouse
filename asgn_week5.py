@@ -1,5 +1,6 @@
 from typing import List
-from random import randint
+import secrets
+
 # Do 2 queens attack each other?
 # an 8x8 array representing a chessboard
 
@@ -21,7 +22,7 @@ def print_board(board: List[List[int]]):
     
 def add_random_queen(chess_board: List[List[int]]) -> List[int]:
     # place a queen randomly on the board
-    random_indexes = (randint(0, len(chess_board) - 1), randint(0, len(chess_board) - 1)) # a tuple of indexes randomly choosen
+    random_indexes = (secrets.SystemRandom().randint(0, len(chess_board) - 1), secrets.SystemRandom().randint(0, len(chess_board) - 1)) # a tuple of indexes randomly choosen
     if chess_board[random_indexes[0]][random_indexes[1]] == 1:
         print("Can't insert queen randomly, position is already taken, rerunning 'add_random_queen'")
         add_random_queen(chess_board)
